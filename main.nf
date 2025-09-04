@@ -14,12 +14,7 @@
     IMPORT FUNCTIONS / MODULES / SUBWORKFLOWS / WORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-
-include { UPDHMM  } from './workflows/updhmm'
-include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_updhmm_pipeline'
-include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_updhmm_pipeline'
-include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_updhmm_pipeline'
-
+include { PREPROCESS_VCF } from './subworkflows/local/preprocess_vcf'
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     GENOME PARAMETER VALUES
@@ -36,69 +31,37 @@ params.fasta = getGenomeAttribute('fasta')
     NAMED WORKFLOWS FOR PIPELINE
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+workflow {
+  take:
+    samples_csv = file(params.input)
 
-//
-// WORKFLOW: Run main analysis pipeline depending on type of input
-//
-workflow NFCORE_UPDHMM {
+  main:
+    Channel
+      .fromPath(samples_csv)
+      .splitCsv(header:true, sep:',')
+      .map { row -> 
+        // normalize missing SVs to '-'
+        row.path_sv_father  = row.path_sv_father  ?: '-'
+        row.path_sv_mother  = row.path_sv_mother  ?: '-'
+        row.path_sv_proband = row.path_sv_proband ?: '-'
+        row
+      }
+      | PREPROCESS_VCF
 
-    take:
-    samplesheet // channel: samplesheet read in from --input
-
-    main:
-
-    //
-    // WORKFLOW: Run pipeline
-    //
-    UPDHMM (
-        samplesheet
-    )
-    emit:
-    multiqc_report = UPDHMM.out.multiqc_report // channel: /path/to/multiqc_report.html
-}
+    // Emit / save final preprocessed VCFs
+    PREPROCESS_VCF.out.preprocessed_vcf
+      .view { it -> "Preprocessed VCF: ${it[1]}" } // tuple(meta, vcf)
+} 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-workflow {
-
-    main:
-    //
-    // SUBWORKFLOW: Run initialisation tasks
-    //
-    PIPELINE_INITIALISATION (
-        params.version,
-        params.validate_params,
-        params.monochrome_logs,
-        args,
-        params.outdir,
-        params.input
-    )
-
-    //
-    // WORKFLOW: Run main workflow
-    //
-    NFCORE_UPDHMM (
-        PIPELINE_INITIALISATION.out.samplesheet
-    )
-    //
-    // SUBWORKFLOW: Run completion tasks
-    //
-    PIPELINE_COMPLETION (
-        params.email,
-        params.email_on_fail,
-        params.plaintext_email,
-        params.outdir,
-        params.monochrome_logs,
-        params.hook_url,
-        NFCORE_UPDHMM.out.multiqc_report
-    )
-}
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     THE END
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+

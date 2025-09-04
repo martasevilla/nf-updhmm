@@ -18,42 +18,78 @@
 
 [![Get help on Slack](http://img.shields.io/badge/slack-nf--core%20%23updhmm-4A154B?labelColor=000000&logo=slack)](https://nfcore.slack.com/channels/updhmm)[![Follow on Bluesky](https://img.shields.io/badge/bluesky-%40nf__core-1185fe?labelColor=000000&logo=bluesky)](https://bsky.app/profile/nf-co.re)[![Follow on Mastodon](https://img.shields.io/badge/mastodon-nf__core-6364ff?labelColor=FFFFFF&logo=mastodon)](https://mstdn.science/@nf_core)[![Watch on YouTube](http://img.shields.io/badge/youtube-nf--core-FF0000?labelColor=000000&logo=youtube)](https://www.youtube.com/c/nf-core)
 
+---
 ## Introduction
 
-**nf-core/updhmm** is a bioinformatics pipeline that ...
+**CIBERER/GdTBioinfo-nf-UPDhmm** is a best-practice analysis pipeline for the **detection of uniparental disomy (UPD)** in trio sequencing data, using [UPDhmm](https://github.com/saraamenasantamaria/UPDhmm-project) and additional preprocessing and postprocessing steps tailored to clinical datasets.
 
-<!-- TODO nf-core:
-   Complete this sentence with a 2-3 sentence summary of what types of data the pipeline ingests, a brief overview of the
-   major pipeline sections and the types of output it produces. You're giving an overview to someone new
-   to nf-core here, in 15-20 seconds. For an example, see https://github.com/nf-core/rnaseq/blob/master/README.md#introduction
--->
+The pipeline is built using [Nextflow](https://www.nextflow.io) DSL2, enabling portability across HPC and cloud infrastructures. Each process runs within its own container, ensuring reproducibility and simplifying software management. Containers from [Biocontainers](https://biocontainers.pro/) are used whenever possible.  
 
-<!-- TODO nf-core: Include a figure that guides the user through the major workflow steps. Many nf-core
-     workflows use the "tube map" design for that. See https://nf-co.re/docs/guidelines/graphic_design/workflow_diagrams#examples for examples.   -->
-<!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
+Where appropriate, modules are reused or patched from [nf-core/modules](https://github.com/nf-core/modules); custom modules are implemented locally following nf-core guidelines.
+
+---
+
+## Pipeline summary
+
+This pipeline standardizes the detection of uniparental disomy (UPD) events in trio sequencing data.  
+It includes preprocessing of raw VCF files to ensure compatibility with the UPDhmm R package, application of a Hidden Markov Model to detect UPD segments, and postprocessing filters to refine the final set of events.
+
+Default steps:
+
+1. **Preprocessing (`PREPROCESS_VCF`)**  
+   Prepares the trio data by combining individual VCFs (if required) and applying filters to keep only high-quality biallelic SNVs.  
+   - `combineVCF` – merges the VCFs from father, mother, and proband into a joint file.  
+   - `filterStructuralVariants` *(optional)* – removes variants overlapping large structural changes.  
+   - `filterRefHomozygotes` – excludes variants homozygous for the reference allele in all trio members.  
+   - `checkVariantQuality` – filters variants by minimum genotype quality (GQ) and depth (DP).  
+   - `filterCentromericRegions` – removes variants within centromeric and pericentromeric regions.  
+   - `filterSegmentalDupsHLAKIR` – excludes segmental duplications and highly polymorphic HLA/KIR regions.  
+   - `selectBialellicVariants` – select only bialellic variant combinations.  
+
+2. **UPD detection (`CALCULATE_EVENTS`)**  
+   Runs the UPDhmm core functions to detect genomic blocks consistent with UPD.  
+   - `vcfCheck` – validates and formats the combined VCF as a `largeCollapsedVcf` object.  
+   - `calculateEvents` – applies the HMM (Viterbi algorithm) to infer hidden states, groups variants into blocks, and annotates each block with confidence metrics.  
+
+3. **Postprocessing (`POSTPROCESS_EVENTS`)**  
+   Refines the set of candidate UPD events.
+   - `filterLowConfidenceEvents` – removes small events or those with insufficient Mendelian errors.  
+   - `mergeOverlappingEvents` – merges overlapping blocks of the same UPD type within a chromosome.  
+
+> Each step is implemented as a separate DSL2 module. Outputs are organized by step and method.
+
+---
 
 ## Usage
 
-> [!NOTE]
-> If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/usage/installation) on how to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline) with `-profile test` before running the workflow on actual data.
+### Input samplesheet
 
-<!-- TODO nf-core: Describe the minimum required steps to execute the pipeline, e.g. how to prepare samplesheets.
-     Explain what rows and columns represent. For instance (please edit as appropriate):
-
-First, prepare a samplesheet with your input data that looks as follows:
+Prepare a **CSV file** with your input data.  
+Each row represents a family (trio), with identifiers for father, mother, and proband, and paths to the corresponding VCFs.  
+Structural variant VCFs can also be included (set to `-` if not available).
 
 `samplesheet.csv`:
 
 ```csv
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
+fam_id,proband_id,father_id,mother_id,path_vcf_proband,path_vcf_father,path_vcf_mother,path_sv_proband,path_sv_father,path_sv_mother
+FAM001,FAM001_PROBAND,FAM001_FATHER,FAM001_MOTHER,/path/to/proband.vcf.gz,/path/to/father.vcf.gz,/path/to/mother.vcf.gz,/path/to/proband.bed,/path/to/father.sv.bed,/path/to/mother.sv.bed
 ```
 
-Each row represents a fastq file (single-end) or a pair of fastq files (paired end).
+**Field description:**
 
--->
+- fam_id: family identifier  
+- proband_id: proband sample identifier  
+- father_id: father sample identifier  
+- mother_id: mother sample identifier  
+- path_vcf_proband: SNV VCF file for the proband  
+- path_vcf_father: SNV VCF file for the father  
+- path_vcf_mother: SNV VCF file for the mother  
+- path_sv_proband: structural variant VCF for the proband (- if not available)  
+- path_sv_father: structural variant VCF for the father (- if not available)  
+- path_sv_mother: structural variant VCF for the mother (- if not available)
 
-Now, you can run the pipeline using:
+
+Then, you can run the pipeline using:
 
 <!-- TODO nf-core: update the following command to include all required parameters for a minimal example -->
 
@@ -64,11 +100,6 @@ nextflow run nf-core/updhmm \
    --outdir <OUTDIR>
 ```
 
-> [!WARNING]
-> Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_; see [docs](https://nf-co.re/docs/usage/getting_started/configuration#custom-configuration-files).
-
-For more details and further functionality, please refer to the [usage documentation](https://nf-co.re/updhmm/usage) and the [parameter documentation](https://nf-co.re/updhmm/parameters).
-
 ## Pipeline output
 
 To see the results of an example test run with a full size dataset refer to the [results](https://nf-co.re/updhmm/results) tab on the nf-core website pipeline page.
@@ -77,19 +108,15 @@ For more details about the output files and reports, please refer to the
 
 ## Credits
 
-nf-core/updhmm was originally written by Marta Sevilla Porras <marta.sevilla@upf.edu>.
+nf-core/updhmm was originally written by Marta Sevilla Porras, Sara Amena Santamaría  and Carlos Ruiz Arenas.
 
-We thank the following people for their extensive assistance in the development of this pipeline:
-
-<!-- TODO nf-core: If applicable, make list of people who have also contributed -->
 
 ## Contributions and Support
 
 If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
 
-For further information or help, don't hesitate to get in touch on the [Slack `#updhmm` channel](https://nfcore.slack.com/channels/updhmm) (you can join with [this invite](https://nf-co.re/join/slack)).
 
-## Citations
+## Citations (pending)
 
 <!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi and badge at the top of this file. -->
 <!-- If you use nf-core/updhmm for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
