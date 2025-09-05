@@ -108,7 +108,7 @@ For more details about the output files and reports, please refer to the
 
 ## Credits
 
-nf-core/updhmm was originally written by Marta Sevilla Porras, Sara Amena Santamaría  and Carlos Ruiz Arenas.
+nf-core/updhmm was originally written by Marta Sevilla Porras, Sara Mena Santamaría  and Carlos Ruiz Arenas.
 
 
 ## Contributions and Support
