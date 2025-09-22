@@ -7,13 +7,12 @@ include { BCFTOOLS_ANNOTATE as BCFTOOLS_DELETE_ANNOTATIONS } from '../../../modu
 workflow REMOVE_ANNOTATIONS {
     
     take:
-    samples_ch    // channel: [meta, vcfs, tbis]
+    samples_ch    // channel: [meta, vcfs] 
     
     main:
-    ch_versions = Channel.empty()
     
     // Flatten to process each VCF individually
-    individual_vcfs_ch = samples_ch.flatMap { meta, vcfs, tbis ->
+    individual_vcfs_ch = samples_ch.flatMap { meta, vcfs ->  
         def individuals = []
         def roles = ['proband', 'mother', 'father']
         
@@ -23,19 +22,13 @@ workflow REMOVE_ANNOTATIONS {
             individual_meta.original_family_id = meta.id
             individual_meta.id = "${meta.id}_${roles[idx]}"
             
-            individuals << tuple(individual_meta, vcf, tbis[idx], [], [])
+            individuals << tuple(individual_meta, vcf, [], [], [])
         }
         return individuals
     }
 
     // Apply delete annotations to each individual VCF
-    BCFTOOLS_DELETE_ANNOTATIONS(
-        individual_vcfs_ch,     
-        [],                     
-        [],                     
-        []                      
-    )
-    ch_versions = ch_versions.mix(BCFTOOLS_DELETE_ANNOTATIONS.out.versions)
+    BCFTOOLS_DELETE_ANNOTATIONS(individual_vcfs_ch, [], [], [])
     
     // Regroup the processed VCFs back into family trios
     regrouped_ch = BCFTOOLS_DELETE_ANNOTATIONS.out.vcf
@@ -66,5 +59,4 @@ workflow REMOVE_ANNOTATIONS {
     
     emit:
     vcfs     = regrouped_ch           // channel: [meta, vcfs, tbis]
-    versions = ch_versions            // channel: versions.yml
 }

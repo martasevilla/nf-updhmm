@@ -11,10 +11,3 @@ workflow {
     final_vcfs = PREPROCESS_VCF.out.vcfs
     final_vcfs.view { "Final processed VCF: $it" }
 }
-
-
-// Probarlo con los datos que me pasó
-
-// Hacer una rama nueva del repositorio donde incluir los pull requests
-
-
