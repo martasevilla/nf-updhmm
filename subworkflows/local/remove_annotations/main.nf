@@ -49,7 +49,7 @@ workflow REMOVE_ANNOTATIONS {
             // Sort VCFs and indices by role to maintain order (proband, mother, father)
             def role_order = ['proband', 'mother', 'father']
             def sorted_data = [roles, vcfs, tbis].transpose().sort { 
-                it[0] in role_order ? role_order.indexOf(it[0]) : 999 
+                role_order.indexOf(it[0])
             }
             def sorted_vcfs = sorted_data.collect { it[1] }
             def sorted_tbis = sorted_data.collect { it[2] }

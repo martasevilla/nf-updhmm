@@ -1,6 +1,6 @@
 {
-    "name": "nf-core/demo",
-    "homePage": "https://github.com/nf-core/demo",
+    "name": "nf-core/updhmm",
+    "homePage": "https://github.com/nf-core/updhmm",
     "repos": {
         "https://github.com/nf-core/modules.git": {
             "modules": {

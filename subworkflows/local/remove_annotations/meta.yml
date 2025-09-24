@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "remove_annotations"
+description: Remove annotations from individual VCF files and regroup by family trios
+keywords:
+  - vcf
+  - annotations
+  - bcftools
+  - family
+  - trio
+  - filtering
+components:
+  - bcftools/annotate
+input:
+  - samples_ch:
+      type: channel
+      description: |
+        Channel containing family metadata and VCF files for trio analysis
+      pattern: "[meta, vcfs]"
+      structure:
+        - meta: Family metadata map containing family ID and SV paths
+        - vcfs: List of VCF files [proband, mother, father] in order
+output:
+  - vcfs:
+      type: channel
+      description: |
+        Processed VCF files with annotations removed, regrouped by family.
+        Each family contains processed VCFs for proband, mother, and father
+        with corresponding index files.
+      pattern: "[meta, vcfs, tbis]"
+      structure:
+        - meta: Family metadata map
+        - vcfs: List of processed VCF files [proband, mother, father] in order
+        - tbis: List of corresponding VCF index files [proband, mother, father] in order
+authors:
+  - "@saramenasantamaria"
+maintainers:
+  - "@saramenasantamaria"

@@ -5,7 +5,7 @@
 */
 include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_demo_pipeline'
+include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_updhmm_pipeline'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -13,7 +13,7 @@ include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_demo
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-workflow DEMO {
+workflow UPDHMM {
 
     take:
     ch_samplesheet // channel: samplesheet read in from --input
@@ -27,7 +27,7 @@ workflow DEMO {
     softwareVersionsToYAML(ch_versions)
         .collectFile(
             storeDir: "${params.outdir}/pipeline_info",
-            name:  'demo_software_'  + 'versions.yml',
+            name:  'updhmm_software_'  + 'versions.yml',
             sort: true,
             newLine: true
         ).set { ch_collated_versions }

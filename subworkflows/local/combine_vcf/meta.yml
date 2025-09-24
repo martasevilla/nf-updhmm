@@ -1,0 +1,58 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "combine_vcf"
+description: Perform VCF intersection and merge operations to combine family trio VCFs into a single merged VCF
+keywords:
+  - vcf
+  - intersection
+  - merge
+  - bcftools
+  - family
+  - trio
+  - combine
+components:
+  - bcftools/isec
+  - bcftools/merge
+input:
+  - vcfs_ch:
+      type: channel
+      description: |
+        Channel containing family metadata, VCF files, and corresponding index files
+        for trio intersection and merging operations
+      pattern: "[meta, vcfs, tbis]"
+      structure:
+        - meta: Family metadata map containing family ID and SV paths
+        - vcfs: List of VCF files [proband, mother, father] to be intersected
+        - tbis: List of corresponding VCF index files
+output:
+  - merged_vcf:
+      type: channel
+      description: |
+        Merged VCF file containing variants common to all three family members
+      pattern: "[meta, vcf]"
+      structure:
+        - meta: Family metadata map
+        - vcf: Merged VCF file
+  - merged_index:
+      type: channel
+      description: |
+        Index file for the merged VCF
+      pattern: "[meta, tbi]"
+      structure:
+        - meta: Family metadata map
+        - tbi: VCF index file
+  - sv_paths:
+      type: channel
+      description: |
+        Combined channel with merged VCF and structural variant paths for downstream filtering
+      pattern: "[meta, sv_p, sv_m, sv_f, vcf, tbi]"
+      structure:
+        - meta: Family metadata map
+        - sv_p: Path to proband SV BED file
+        - sv_m: Path to mother SV BED file
+        - sv_f: Path to father SV BED file
+        - vcf: Merged VCF file
+        - tbi: VCF index file
+authors:
+  - "@saramenasantamaria"
+maintainers:
+  - "@saramenasantamaria"

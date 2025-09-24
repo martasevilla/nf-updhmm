@@ -1,7 +1,7 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://raw.githubusercontent.com/nf-core/demo/master/nextflow_schema.json",
-    "title": "nf-core/demo pipeline parameters",
+    "title": "nf-core/updhmm pipeline parameters",
     "description": "Mi primera pipeline",
     "type": "object",
     "$defs": {
