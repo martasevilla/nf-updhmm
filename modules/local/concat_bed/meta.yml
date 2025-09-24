@@ -1,0 +1,50 @@
+name: "CONCAT_BED"
+description: "Concatenate multiple BED files containing structural variant regions, clean and sort entries"
+keywords:
+  - "bed"
+  - "structural variants"
+  - "concatenate"
+  - "genomics"
+  - "preprocessing"
+tools:
+  - "awk":
+      description: "Pattern scanning and processing language"
+      homepage: "https://www.gnu.org/software/gawk/"
+      documentation: "https://www.gnu.org/software/gawk/manual/"
+      licence: ["GPL-3.0"]
+  - "sort":
+      description: "Sort lines of text files"
+      homepage: "https://www.gnu.org/software/coreutils/"
+      documentation: "https://www.gnu.org/software/coreutils/manual/"
+      licence: ["GPL-3.0"]
+  - "uniq":
+      description: "Report or omit repeated lines"
+      homepage: "https://www.gnu.org/software/coreutils/"
+      documentation: "https://www.gnu.org/software/coreutils/manual/"
+      licence: ["GPL-3.0"]
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. [ id:'test', single_end:false ]
+    - beds:
+        type: file
+        description: |
+          Multiple BED files containing structural variant regions from different sources
+          e.g. ['proband.bed', 'mother.bed', 'father.bed']
+        pattern: "*.bed"
+output:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. [ id:'test', single_end:false ]
+    - "*_svs_concatenated.bed":
+        type: file
+        description: "Concatenated, cleaned, sorted and deduplicated BED file with SV regions"
+        pattern: "*_svs_concatenated.bed"
+authors:
+  - "@saramenasantamaria"
+maintainers:
+  - "@saramenasantamaria"

@@ -1,0 +1,43 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "sv_mask_bed"
+description: Filter structural variants using BED regions by concatenating, merging, and applying region masks
+keywords:
+  - structural variants
+  - BED regions
+  - filtering
+  - masking
+  - vcf
+  - bcftools
+  - bedtools
+components:
+  - concat_bed
+  - bedtools/merge
+  - bcftools/view
+input:
+  - sv_paths_ch:
+      type: channel
+      description: |
+        Channel containing sample metadata and structural variant paths
+      pattern: "[meta, sv_p, sv_m, sv_f, vcf, tbi]"
+      structure:
+        - meta: Sample metadata map
+        - sv_p: Path to proband SV BED file (or '-' if none)
+        - sv_m: Path to mother SV BED file (or '-' if none)  
+        - sv_f: Path to father SV BED file (or '-' if none)
+        - vcf: Input VCF file
+        - tbi: Input VCF index file
+output:
+  - vcfs:
+      type: channel
+      description: |
+        Processed VCF files with structural variants filtered out using BED masks.
+        For samples without SVs, VCFs are passed through unmodified.
+      pattern: "[meta, vcf, tbi]"
+      structure:
+        - meta: Sample metadata map
+        - vcf: Filtered VCF file
+        - tbi: VCF index file
+authors:
+  - "@saramenasantamaria"
+maintainers:
+  - "@saramenasantamaria"
