@@ -1,0 +1,75 @@
+name: "updhmm_analysis"
+description: "Detect uniparental disomy (UPD) events from trio VCF files using UPDhmm"
+keywords:
+  - genomics
+  - upd
+  - uniparental disomy
+  - trio analysis
+  - variant calling
+  - mendelian inheritance
+  - bioconductor
+tools:
+  - "r-base":
+      description: "R is a free software environment for statistical computing and graphics"
+      homepage: "https://www.r-project.org/"
+      documentation: "https://www.r-project.org/"
+      tool_dev_url: "https://www.r-project.org/"
+      licence: "GPL-2"
+  - "bioconductor-updhmm":
+      description: "An R package for the detection of uniparental disomy from trio genotype data"
+      homepage: "https://bioconductor.org/packages/UPDhmm/"
+      documentation: "https://bioconductor.org/packages/UPDhmm/"
+      tool_dev_url: "https://github.com/Bioconductor/UPDhmm"
+      licence: "GPL-3"
+      args_id: "$args"
+  - "bioconductor-variantannotation":
+      description: "Annotation of Genetic Variants"
+      homepage: "https://bioconductor.org/packages/VariantAnnotation/"
+      documentation: "https://bioconductor.org/packages/VariantAnnotation/"
+      tool_dev_url: "https://github.com/Bioconductor/VariantAnnotation"
+      licence: "Artistic-2.0"
+  - "r-optparse":
+      description: "Command line option parser for R"
+      homepage: "https://github.com/trevorld/r-optparse"
+      documentation: "https://github.com/trevorld/r-optparse"
+      tool_dev_url: "https://github.com/trevorld/r-optparse"
+      licence: "GPL-2"
+
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. `[ id:'sample1', genome_build:'hg38' ]`
+  - vcf:
+      type: file
+      description: "Input VCF file containing trio genotype data (compressed or uncompressed)"
+      pattern: "*.{vcf,vcf.gz}"
+  - tbi:
+      type: file
+      description: "Tabix index file for the VCF (required for compressed VCF files)"
+      pattern: "*.{tbi,csi}"
+
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. `[ id:'sample1', genome_build:'hg38' ]`
+  - versions:
+      type: file
+      description: "File containing software versions"
+      pattern: "versions.yml"
+  - upd_results:
+      type: file
+      description: "UPD analysis results in tabular format with detected events"
+      pattern: "*.upd_results.txt"
+  - upd_events:
+      type: file
+      description: "UPD events data in R data format for further analysis"
+      pattern: "*.upd_events.rds"
+
+authors:
+  - "@saramenasantamaria"
+maintainers:
+  - "@saramenasantamaria"

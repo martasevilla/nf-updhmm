@@ -2,7 +2,7 @@ process BCFTOOLS_ANNOTATE {
     tag "${meta.id}"
     label 'process_low'
 
-    conda "${moduleDir}/environment.yml"
+    //conda "${moduleDir}/environment.yml"
     //ext.singularity_pull_docker_container = true
     container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
         ? 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/5a/5acacb55c52bec97c61fd34ffa8721fce82ce823005793592e2a80bf71632cd0/data'

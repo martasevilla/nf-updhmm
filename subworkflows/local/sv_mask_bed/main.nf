@@ -20,6 +20,8 @@ workflow SV_MASK_BED {
     
     main:
     
+    ch_versions = Channel.empty()
+
     // Split samples depending on whether they have SVs or not
     sv_paths_ch.branch { meta, sv_p, sv_m, sv_f, vcf, tbi ->
         with_sv: [sv_p, sv_m, sv_f].any { it != '-' }
@@ -42,6 +44,7 @@ workflow SV_MASK_BED {
     // Merge overlapping regions to create a unified mask
     BEDTOOLS_MERGE(concat_bed_ch)
     merged_bed_ch = BEDTOOLS_MERGE.out.bed
+    ch_versions = ch_versions.mix(BEDTOOLS_MERGE.out.versions)
 
     mask_combined_ch = beds_ch
         .map { meta, beds, vcf, tbi -> tuple(meta, vcf, tbi) }      
@@ -62,6 +65,7 @@ workflow SV_MASK_BED {
     with_sv_tbi_ch = VIEW_MASK.out.tbi
     with_sv_joined_ch = with_sv_vcf_ch.join(with_sv_tbi_ch)
         .map { meta, vcf, tbi -> tuple(meta, vcf, tbi) }
+    ch_versions = ch_versions.mix(VIEW_MASK.out.versions)
     
     // ------------------
     // Process samples without SVs 
@@ -73,4 +77,5 @@ workflow SV_MASK_BED {
     
     emit:
     vcfs     = all_vcfs_ch           // channel: [meta, vcf, tbi]
+    versions = ch_versions           // channel: versions.yml
 }

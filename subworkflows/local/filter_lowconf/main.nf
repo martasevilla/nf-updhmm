@@ -21,6 +21,7 @@ workflow FILTER_LOWCONF {
     vcfs_ch    // channel: [meta, vcf, tbi]
     
     main:
+    ch_versions = Channel.empty()
     
     // Create empty channel for unused inputs
     empty_ch = Channel.value([])
@@ -32,19 +33,24 @@ workflow FILTER_LOWCONF {
 
     // Filter 1: Keep only biallelic variants
     BCFTOOLS_VIEW_BIALLELIC(vcfs_ch, empty_ch, empty_ch, empty_ch)
+    ch_versions = ch_versions.mix(BCFTOOLS_VIEW_BIALLELIC.out.versions)
     
     // Filter 2: Apply quality filters (GQ and DP)
     BCFTOOLS_VIEW_QUAL_MIN(combineVcfIndex(BCFTOOLS_VIEW_BIALLELIC.out.vcf, BCFTOOLS_VIEW_BIALLELIC.out.tbi), empty_ch, empty_ch, empty_ch)
-    
+    ch_versions = ch_versions.mix(BCFTOOLS_VIEW_QUAL_MIN.out.versions)
+
     // Filter 3: Exclude reference homozygous variants
     BCFTOOLS_VIEW_REFHOMO_EXCLUDE(combineVcfIndex(BCFTOOLS_VIEW_QUAL_MIN.out.vcf, BCFTOOLS_VIEW_QUAL_MIN.out.tbi), empty_ch, empty_ch, empty_ch)
-    
+    ch_versions = ch_versions.mix(BCFTOOLS_VIEW_REFHOMO_EXCLUDE.out.versions)
+
     // Filter 4: Exclude problematic genomic regions (centromeres, segmental duplications and HLA/KIR regions)
     BCFTOOLS_VIEW_EXCL_ALL(combineVcfIndex(BCFTOOLS_VIEW_REFHOMO_EXCLUDE.out.vcf, BCFTOOLS_VIEW_REFHOMO_EXCLUDE.out.tbi), empty_ch, empty_ch, empty_ch)
-    
+    ch_versions = ch_versions.mix(BCFTOOLS_VIEW_EXCL_ALL.out.versions)
+
     // Final output
     final_vcfs = combineVcfIndex(BCFTOOLS_VIEW_EXCL_ALL.out.vcf, BCFTOOLS_VIEW_EXCL_ALL.out.tbi)
     
     emit:
     vcfs     = final_vcfs            // channel: [meta, vcf, tbi]
+    versions = ch_versions           // channel: versions.yml
 }

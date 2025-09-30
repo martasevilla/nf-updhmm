@@ -14,6 +14,7 @@ workflow PREPROCESS_VCF {
     samplesheet_path    // path: samplesheet CSV file
     
     main:
+    ch_versions = Channel.empty()
     
     // Create channel from samplesheet
     samplesheet_ch = Channel.fromPath(samplesheet_path, checkIfExists: true)
@@ -21,6 +22,7 @@ workflow PREPROCESS_VCF {
     // Validate samplesheet
     SAMPLESHEET_CHECK(samplesheet_ch)
     validated_samplesheet = SAMPLESHEET_CHECK.out.csv
+    ch_versions = ch_versions.mix(SAMPLESHEET_CHECK.out.versions.first())
 
     // Build channel of VCFs and metadata
     samples_ch = validated_samplesheet
@@ -42,16 +44,21 @@ workflow PREPROCESS_VCF {
 
     // Step 1: Remove annotations (Keep only essential fields)
     REMOVE_ANNOTATIONS(samples_ch)
+    ch_versions = ch_versions.mix(REMOVE_ANNOTATIONS.out.versions)
     
     // Step 2: Intersection and merge (Combine the three VCFs into one)
     COMBINE_VCF(REMOVE_ANNOTATIONS.out.vcfs)
+    ch_versions = ch_versions.mix(COMBINE_VCF.out.versions)
 
     // Step 3: Filter Structural Variants
     SV_MASK_BED(COMBINE_VCF.out.sv_paths)
+    ch_versions = ch_versions.mix(SV_MASK_BED.out.versions)
     
     // Step 4: Apply low confidence filters
     FILTER_LOWCONF(SV_MASK_BED.out.vcfs)
+    ch_versions = ch_versions.mix(FILTER_LOWCONF.out.versions)
     
     emit:
     vcfs     = FILTER_LOWCONF.out.vcfs    // channel: [meta, vcf, tbi] - Final processed VCFs
+    versions = ch_versions                // channel: versions.yml
 }

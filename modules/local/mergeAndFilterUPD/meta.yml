@@ -1,0 +1,67 @@
+name: "mergeandfilterupd"
+description: "Merge overlapping UPD (Uniparental Disomy) events and filter by criteria"
+keywords:
+  - genomics
+  - upd
+  - uniparental disomy
+  - filtering
+  - genomic ranges
+  - mendelian errors
+  - structural variants
+tools:
+  - "r-base":
+      description: "R is a free software environment for statistical computing and graphics"
+      homepage: "https://www.r-project.org/"
+      documentation: "https://www.r-project.org/"
+      tool_dev_url: "https://www.r-project.org/"
+      licence: "GPL-2"
+  - "bioconductor-genomicranges":
+      description: "Representation and manipulation of genomic intervals"
+      homepage: "https://bioconductor.org/packages/GenomicRanges/"
+      documentation: "https://bioconductor.org/packages/GenomicRanges/"
+      tool_dev_url: "https://github.com/Bioconductor/GenomicRanges"
+      licence: "Artistic-2.0"
+      args_id: "$args"
+  - "r-dplyr":
+      description: "A grammar of data manipulation"
+      homepage: "https://dplyr.tidyverse.org/"
+      documentation: "https://dplyr.tidyverse.org/"
+      tool_dev_url: "https://github.com/tidyverse/dplyr"
+      licence: "MIT"
+  - "r-optparse":
+      description: "Command line option parser for R"
+      homepage: "https://github.com/trevorld/r-optparse"
+      documentation: "https://github.com/trevorld/r-optparse"
+      tool_dev_url: "https://github.com/trevorld/r-optparse"
+      licence: "GPL-2"
+
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. `[ id:'sample1', single_end:false ]`
+  - upd_events_file:
+      type: file
+      description: "Input file containing UPD events in tabular format (.txt) or R data format (.rds)"
+      pattern: "*.{txt,rds}"
+
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. `[ id:'sample1', single_end:false ]`
+  - versions:
+      type: file
+      description: "File containing software versions"
+      pattern: "versions.yml"
+  - filtered_events:
+      type: file
+      description: "Filtered and merged UPD events file in tabular format"
+      pattern: "*_filtered_upd_events.txt"
+
+authors:
+  - "@saramenasantamaria"
+maintainers:
+  - "@saramenasantamaria"

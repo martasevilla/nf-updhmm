@@ -10,6 +10,7 @@ workflow REMOVE_ANNOTATIONS {
     samples_ch    // channel: [meta, vcfs] 
     
     main:
+    ch_versions = Channel.empty()
     
     // Flatten to process each VCF individually
     individual_vcfs_ch = samples_ch.flatMap { meta, vcfs ->  
@@ -29,6 +30,7 @@ workflow REMOVE_ANNOTATIONS {
 
     // Apply delete annotations to each individual VCF
     BCFTOOLS_DELETE_ANNOTATIONS(individual_vcfs_ch, [], [], [])
+    ch_versions = ch_versions.mix(BCFTOOLS_DELETE_ANNOTATIONS.out.versions)
     
     // Regroup the processed VCFs back into family trios
     regrouped_ch = BCFTOOLS_DELETE_ANNOTATIONS.out.vcf
@@ -59,4 +61,5 @@ workflow REMOVE_ANNOTATIONS {
     
     emit:
     vcfs     = regrouped_ch           // channel: [meta, vcfs, tbis]
+    versions = ch_versions            // channel: versions.yml
 }
