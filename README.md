@@ -101,11 +101,61 @@ nextflow run nf-core/updhmm \
    --outdir <OUTDIR>
 ```
 
-## Pipeline output
+## Output summary
 
-To see the results of an example test run with a full size dataset refer to the [results](https://nf-co.re/updhmm/results) tab on the nf-core website pipeline page.
-For more details about the output files and reports, please refer to the
-[output documentation](https://nf-co.re/updhmm/output).
+For each trio, the pipeline generates two main tab-delimited files:  
+
+1. **Raw events (`<trio>.raw.txt`)**  
+   Direct output of the `UPDhmm::calculateEvents` function. This file contains all detected UPD candidate events without additional filtering.  
+
+The core UPDhmm function, `calculateEvents`, returns a **data.frame** containing all detected UPD events for a given trio.  
+If no events are found, an empty data.frame is returned.  
+
+**Output columns:**  
+
+| Column name          | Description                                                                 |
+|----------------------|-----------------------------------------------------------------------------|
+| seqnames             | Chromosome                                                                 |
+| start                | Start position of the block                                                |
+| end                  | End position of the block                                                  |
+| n_snps               | Number of variants within the event                                        |
+| group                | Predicted UPD state (e.g. iso_mat, het_fat)                                |
+| log_likelihood       | Log likelihood ratio for the inferred block                                |
+| p_value              | Statistical significance of the event                                      |
+| n_mendelian_error    | Number of Mendelian errors supporting the event                            |
+
+
+2. **Collapsed events (`<trio>.collapsed.txt`)**  
+   Postprocessed and filtered results. Overlapping events of the same type within the same chromosome (e.g. paternal isodisomy) are merged into a single representative block.  
+   Additional columns report the start and end coordinates of the merged region, together with a semicolon-separated list of all original raw events collapsed.
+
+
+**Example collapsed output:**  
+
+| chromosome | UPD type | n_events | total_mendelian_error | collapsed_event_ranges                                      | min_start | max_end   |
+|------------|----------|----------|-----------------------|-------------------------------------------------------------|-----------|-----------|
+| chr12      | iso_mat  | 2        | 108                   | chr12:16885604-25756939; chr12:25866874-29838830             | 16885604  | 29838830  |
+| chr17      | het_mat  | 1        | 3                     | chr17:45990746-46714277                                     | 45990746  | 46714277  |
+| chr7       | het_mat  | 1        | 11                    | chr7:55624055-56153077                                      | 55624055  | 56153077  |
+| chr2       | het_fat  | 1        | 3                     | chr2:89791539-96090799                                      | 89791539  | 96090799  |
+
+
+## Test execution
+
+You can test the pipeline using the small example dataset provided in this repository.  
+The test dataset contains two trios (subset of a single chromosome):  
+- One trio includes a **simulated UPD event**  
+- The other trio is a **negative control** without UPD  
+
+The dataset is available at [Zenodo (10.5281/zenodo.17193905)](https://zenodo.org/records/17193905).  
+
+Run the pipeline in **test mode** with:  
+
+```bash
+nextflow run nf-core/updhmm \
+   -profile <docker/singularity>,test \
+   --outdir <OUTDIR>
+
 
 ## Credits
 
