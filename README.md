@@ -37,24 +37,33 @@ It includes preprocessing of raw VCF files to ensure compatibility with the UPDh
 Default steps:
 
 1. **Preprocessing (`PREPROCESS_VCF`)**  
-   Prepares the trio data by combining individual VCFs (if required) and applying filters to keep only high-quality biallelic SNVs.  
-   - `combineVCF` – merges the VCFs from father, mother, and proband into a joint file.  
-   - `filterStructuralVariants` *(optional)* – removes variants overlapping large structural changes.  
-   - `filterRefHomozygotes` – excludes variants homozygous for the reference allele in all trio members.  
-   - `checkVariantQuality` – filters variants by minimum genotype quality (GQ) and depth (DP).  
-   - `filterCentromericRegions` – removes variants within centromeric and pericentromeric regions.  
-   - `filterSegmentalDupsHLAKIR` – excludes segmental duplications and highly polymorphic HLA/KIR regions.  
-   - `selectBialellicVariants` – select only bialellic variant combinations.  
-
-2. **UPD detection (`CALCULATE_EVENTS`)**  
+   Prepares the trio data by combining individual VCFs (if required) and applying filters to keep only high-quality biallelic SNVs.
+   
+   - `SAMPLESHEET_CHECK` - verifies that the provided sample sheet is correctly formatted and includes all required fields.
+   - `REMOVE_ANNOTATIONS` - remove annotations from individual VCF files and regroup by family.
+   - `COMBINE_VCF` – merges the VCFs from father, mother, and proband into a joint file, retaining only the variants shared by all three individuals.
+   - `SV_MASK_BED` *(optional)* – removes variants overlapping large structural changes.
+   - `FILTER_LOWCONF` - apply hard filters to produce the final preprocessed VCF per family.
+        - `BCFTOOLS_VIEW_BIALLELIC` - keep only biallelic variants.
+        - `BCFTOOLS_VIEW_QUAL_MIN` - filters variants by minimum genotype quality (GQ) and depth (DP).  
+        - `BCFTOOLS_VIEW_REFHOMO_EXCLUDE` - excludes variants homozygous for the reference allele in all trio members.  
+        - `BCFTOOLS_VIEW_EXCL_ALL` - exclude problematic genomic regions (centromeres, segmental duplications and highly polymorphic HLA/KIR regions)
+  
+3. **UPD detection (`CALCULATE_EVENTS`)**  
    Runs the UPDhmm core functions to detect genomic blocks consistent with UPD.  
    - `vcfCheck` – validates and formats the combined VCF as a `largeCollapsedVcf` object.  
    - `calculateEvents` – applies the HMM (Viterbi algorithm) to infer hidden states, groups variants into blocks, and annotates each block with confidence metrics.  
 
-3. **Postprocessing (`POSTPROCESS_EVENTS`)**  
+4. **Postprocessing (`POSTPROCESS_EVENTS`)**  
    Refines the set of candidate UPD events.
-   - `filterLowConfidenceEvents` – removes small events or those with insufficient Mendelian errors.  
-   - `mergeOverlappingEvents` – merges overlapping blocks of the same UPD type within a chromosome.  
+   
+   - `MERGE_AND_FILTER_UPD`
+
+     - `filterLowConfidenceEvents` – removes small events or those with insufficient Mendelian errors.  
+     - `mergeOverlappingEvents` – merges overlapping blocks of the same UPD type within a chromosome.
+    
+   - `FILTER_EVENTS_WITH_ABNORMAL_DEPTH` - remove events with abnormal depth compared to the global genome average. **(falta por implementar)**
+   - `FILTER_RECURRENT_EVENTS` - remove regions where events overlap in more than two unrelated individuals if they present fewer than 100 Mendelian errors. **(falta por implementar)**
 
 > Each step is implemented as a separate DSL2 module. Outputs are organized by step and method.
 
@@ -71,22 +80,22 @@ Structural variant VCFs can also be included (set to `-` if not available).
 `samplesheet.csv`:
 
 ```csv
-fam_id,proband_id,father_id,mother_id,path_vcf_proband,path_vcf_father,path_vcf_mother,path_sv_proband,path_sv_father,path_sv_mother
-FAM001,FAM001_PROBAND,FAM001_FATHER,FAM001_MOTHER,/path/to/proband.vcf.gz,/path/to/father.vcf.gz,/path/to/mother.vcf.gz,/path/to/proband.bed,/path/to/father.sv.bed,/path/to/mother.sv.bed
+fam_id,proband_id,mother_id,father_id,path_vcf_proband,path_vcf_mother,path_vcf_father,path_sv_proband,path_sv_mother,path_sv_father
+FAM001,FAM001_PROBAND,FAM001_MOTHER,FAM001_FATHER,/path/to/proband.vcf.gz,/path/to/mother.vcf.gz,/path/to/father.vcf.gz,/path/to/proband.bed,/path/to/mother.sv.bed,/path/to/father.sv.bed
 ```
 
 **Field description:**
 
 - fam_id: family identifier  
-- proband_id: proband sample identifier  
+- proband_id: proband sample identifier
+- mother_id: mother sample identifier   
 - father_id: father sample identifier  
-- mother_id: mother sample identifier  
-- path_vcf_proband: SNV VCF file for the proband  
-- path_vcf_father: SNV VCF file for the father  
+- path_vcf_proband: SNV VCF file for the proband
 - path_vcf_mother: SNV VCF file for the mother  
-- path_sv_proband: structural variant VCF for the proband (- if not available)  
-- path_sv_father: structural variant VCF for the father (- if not available)  
+- path_vcf_father: SNV VCF file for the father   
+- path_sv_proband: structural variant VCF for the proband (- if not available)
 - path_sv_mother: structural variant VCF for the mother (- if not available)
+- path_sv_father: structural variant VCF for the father (- if not available)  
 
 
 Then, you can run the pipeline using:
@@ -101,11 +110,62 @@ nextflow run nf-core/updhmm \
    --genome_build <hg38/hg19>
 ```
 
-## Pipeline output
+## Output summary
 
-To see the results of an example test run with a full size dataset refer to the [results](https://nf-co.re/updhmm/results) tab on the nf-core website pipeline page.
-For more details about the output files and reports, please refer to the
-[output documentation](https://nf-co.re/updhmm/output).
+For each trio, the pipeline generates two main tab-delimited files:  
+
+1. **Raw events (`<trio>.raw.txt`)**  
+   Direct output of the `UPDhmm::calculateEvents` function. This file contains all detected UPD candidate events without additional filtering.  
+
+The core UPDhmm function, `calculateEvents`, returns a **data.frame** containing all detected UPD events for a given trio.  
+If no events are found, an empty data.frame is returned.  
+
+**Output columns:**  
+
+| Column name          | Description                                                                 |
+|----------------------|-----------------------------------------------------------------------------|
+| seqnames             | Chromosome                                                                 |
+| start                | Start position of the block                                                |
+| end                  | End position of the block                                                  |
+| n_snps               | Number of variants within the event                                        |
+| group                | Predicted UPD state (e.g. iso_mat, het_fat)                                |
+| log_likelihood       | Log likelihood ratio for the inferred block                                |
+| p_value              | Statistical significance of the event                                      |
+| n_mendelian_error    | Number of Mendelian errors supporting the event                            |
+
+
+2. **Collapsed events (`<trio>.collapsed.txt`)**  
+   Postprocessed and filtered results. Overlapping events of the same type within the same chromosome (e.g. paternal isodisomy) are merged into a single representative block.  
+   Additional columns report the start and end coordinates of the merged region, together with a semicolon-separated list of all original raw events collapsed.
+
+
+**Example collapsed output:**  
+
+| chromosome | UPD type | n_events | total_mendelian_error | collapsed_event_ranges                                      | min_start | max_end   |
+|------------|----------|----------|-----------------------|-------------------------------------------------------------|-----------|-----------|
+| chr12      | iso_mat  | 2        | 108                   | chr12:16885604-25756939; chr12:25866874-29838830             | 16885604  | 29838830  |
+| chr17      | het_mat  | 1        | 3                     | chr17:45990746-46714277                                     | 45990746  | 46714277  |
+| chr7       | het_mat  | 1        | 11                    | chr7:55624055-56153077                                      | 55624055  | 56153077  |
+| chr2       | het_fat  | 1        | 3                     | chr2:89791539-96090799                                      | 89791539  | 96090799  |
+
+
+## Test execution
+
+You can test the pipeline using the small example dataset provided in this repository.  
+The test dataset contains two trios (subset of a single chromosome):  
+- One trio includes a **simulated UPD event**  
+- The other trio is a **negative control** without UPD  
+
+The dataset is available at [Zenodo (10.5281/zenodo.17193905)](https://zenodo.org/records/17193905).  
+
+Run the pipeline in **test mode** with:  
+
+```bash
+nextflow run nf-core/updhmm \
+   -profile <docker/singularity>,test \
+   --outdir <OUTDIR>
+   --genome_build <hg38/hg19>
+```
 
 ## Credits
 
