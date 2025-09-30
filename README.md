@@ -101,6 +101,7 @@ nextflow run nf-core/updhmm \
    --outdir <OUTDIR>
 ```
 
+
 ## Output summary
 
 For each trio, the pipeline generates two main tab-delimited files:  
@@ -155,7 +156,7 @@ Run the pipeline in **test mode** with:
 nextflow run nf-core/updhmm \
    -profile <docker/singularity>,test \
    --outdir <OUTDIR>
-
+```
 
 ## Credits
 
