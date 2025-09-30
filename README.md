@@ -48,7 +48,7 @@ Default steps:
 
 2. **UPD detection (`CALCULATE_EVENTS`)**  
    Runs the UPDhmm core functions to detect genomic blocks consistent with UPD.  
-   - `vcfCheck` – validates and formats the combined VCF as a `largeCollapsedVcf` object.  
+   - `vcfCheck` – validates and formats the combined VCF as a `largeCollapsedVcf` object. It also assigns the roles of **proband**, **father**, and **mother** to the samples, based on the provided samplesheet.
    - `calculateEvents` – applies the HMM (Viterbi algorithm) to infer hidden states, groups variants into blocks, and annotates each block with confidence metrics.  
 
 3. **Postprocessing (`POSTPROCESS_EVENTS`)**  
