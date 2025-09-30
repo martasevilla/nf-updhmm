@@ -71,22 +71,23 @@ Structural variant VCFs can also be included (set to `-` if not available).
 `samplesheet.csv`:
 
 ```csv
-fam_id,proband_id,father_id,mother_id,path_vcf_proband,path_vcf_father,path_vcf_mother,path_sv_proband,path_sv_father,path_sv_mother
-FAM001,FAM001_PROBAND,FAM001_FATHER,FAM001_MOTHER,/path/to/proband.vcf.gz,/path/to/father.vcf.gz,/path/to/mother.vcf.gz,/path/to/proband.bed,/path/to/father.sv.bed,/path/to/mother.sv.bed
+fam_id,proband_id,mother_id,father_id,path_vcf_proband,path_vcf_mother,path_vcf_father,path_sv_proband,path_sv_mother,path_sv_father
+FAM001,FAM001_PROBAND,FAM001_MOTHER,FAM001_FATHER,/path/to/proband.vcf.gz,/path/to/mother.vcf.gz,/path/to/father.vcf.gz,/path/to/proband.bed,/path/to/mother.sv.bed,/path/to/father.sv.bed
 ```
 
 **Field description:**
 
 - fam_id: family identifier  
-- proband_id: proband sample identifier  
+- proband_id: proband sample identifier
+- mother_id: mother sample identifier   
 - father_id: father sample identifier  
-- mother_id: mother sample identifier  
-- path_vcf_proband: SNV VCF file for the proband  
-- path_vcf_father: SNV VCF file for the father  
+- path_vcf_proband: SNV VCF file for the proband
 - path_vcf_mother: SNV VCF file for the mother  
-- path_sv_proband: structural variant VCF for the proband (- if not available)  
-- path_sv_father: structural variant VCF for the father (- if not available)  
+- path_vcf_father: SNV VCF file for the father   
+- path_sv_proband: structural variant VCF for the proband (- if not available)
 - path_sv_mother: structural variant VCF for the mother (- if not available)
+- path_sv_father: structural variant VCF for the father (- if not available)  
+
 
 
 Then, you can run the pipeline using:
