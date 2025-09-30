@@ -32,7 +32,7 @@ Where appropriate, modules are reused or patched from [nf-core/modules](https://
 ## Pipeline summary
 
 This pipeline standardizes the detection of uniparental disomy (UPD) events in trio sequencing data.  
-It includes preprocessing of raw VCF files to ensure compatibility with the UPDhmm R package, application of a Hidden Markov Model to detect UPD segments, and postprocessing filters to refine the final set of events.
+It includes preprocessing of raw VCF files to ensure compatibility with the UPDhmm R package, application of UPDHmm Biocondcutor package (a Hidden Markov Model to detect UPD segments), and postprocessing filters to refine the final set of events.
 
 Default steps:
 
