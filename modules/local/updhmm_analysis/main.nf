@@ -2,9 +2,11 @@
 
 process CALCULATE_EVENTS {
     tag "$meta.id"
-    label 'process_medium'
+    label 'process_high'
     
-    conda "bioconda::bioconductor-updhmm=1.4.0 conda-forge::r-optparse=1.7.3"
+    conda "${moduleDir}/environment.yml"
+    container "/home/u0030001/nf-updhmm_zenodo/updhmm-new_gen.sif"
+    //container "docker://martasevilla/updhmm-new:1.3.0"
 
     input:
     tuple val(meta), path(vcf), path(tbi)
