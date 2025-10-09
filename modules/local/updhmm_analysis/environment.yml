@@ -5,5 +5,6 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - bioconductor-updhmm=1.4.0
+  - r-base=4.3.0
+  - bioconductor-variantannotation=1.48.1
   - r-optparse=1.7.3
