@@ -3,7 +3,7 @@ nextflow.enable.dsl=2
 
 include { PREPROCESS_VCF } from './subworkflows/local/preprocess_vcf/main'
 include { CALCULATE_EVENTS } from './modules/local/updhmm_analysis/main'
-include { RECURRENT_REGIONS  } from './modules/local/recurrent_regions/main'
+//include { RECURRENT_REGIONS  } from './modules/local/recurrent_regions/main'
 
 workflow {
     
@@ -17,6 +17,7 @@ workflow {
     CALCULATE_EVENTS(PREPROCESS_VCF.out.vcfs)
     
     // Step 3: POST-PROCESSING - Mark recurrent regions using RDS files
+    /**
     all_collapsed_rds = CALCULATE_EVENTS.out.upd_collapsed_rds
         .map { meta, file -> file } 
         .collect()  // Wait for ALL samples to complete
@@ -26,5 +27,6 @@ workflow {
         .set { filtered_rds_files }
     
     RECURRENT_REGIONS(filtered_rds_files)
+    **/
 }
 
