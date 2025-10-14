@@ -15,7 +15,7 @@ workflow REMOVE_ANNOTATIONS {
     // Flatten to process each VCF individually
     individual_vcfs_ch = samples_ch.flatMap { meta, vcfs ->  
         def individuals = []
-        def roles = ['proband', 'mother', 'father']
+        def roles = ['01', '02', '03'] // 01: Proband, 02: Mother, 03: Father
         
         vcfs.eachWithIndex { vcf, idx ->
             def individual_meta = meta.clone()
@@ -49,7 +49,7 @@ workflow REMOVE_ANNOTATIONS {
             ]
             
             // Sort VCFs and indices by role to maintain order (proband, mother, father)
-            def role_order = ['proband', 'mother', 'father']
+            def role_order = ['01', '02', '03']
             def sorted_data = [roles, vcfs, tbis].transpose().sort { 
                 role_order.indexOf(it[0])
             }

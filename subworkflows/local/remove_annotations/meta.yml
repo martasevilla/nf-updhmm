@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
-name: "remove_annotations"
+name: "REMOVE_ANNOTATIONS"
 description: Remove annotations from individual VCF files and regroup by family trios
 keywords:
   - vcf
@@ -31,6 +31,10 @@ output:
         - meta: Family metadata map
         - vcfs: List of processed VCF files [proband, mother, father] in order
         - tbis: List of corresponding VCF index files [proband, mother, father] in order
+  - versions:
+      type: channel
+      description: Channel containing software versions
+      pattern: "versions.yml"
 authors:
   - "@saramenasantamaria"
 maintainers:

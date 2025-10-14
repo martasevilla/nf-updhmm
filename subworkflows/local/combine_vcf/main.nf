@@ -1,6 +1,9 @@
 //
 // Perform VCF intersection and merge operations
 //
+// If `params.perform_intersection` is true, only shared variants among trio members are retained (intersection mode).
+// Otherwise, all variants from the trio are combined directly (union mode).
+//
 
 include { BCFTOOLS_ISEC  } from '../../../modules/nf-core/bcftools/isec/main'
 include { BCFTOOLS_MERGE } from '../../../modules/nf-core/bcftools/merge/main'
@@ -13,32 +16,41 @@ workflow COMBINE_VCF {
     main:
     ch_versions = Channel.empty()
 
-    // VCF intersection
-    BCFTOOLS_ISEC(vcfs_ch)
-    ch_versions = ch_versions.mix(BCFTOOLS_ISEC.out.versions)
+    // Step 1: Optionally perform VCF intersection
+    // If `perform_intersection` is enabled, extract only variants shared among all trio members
+    if (params.perform_intersection) {
+        
+        // Run intersection across trio VCFs
+        BCFTOOLS_ISEC(vcfs_ch)
+        ch_versions = ch_versions.mix(BCFTOOLS_ISEC.out.versions)
 
-    merge_ch = BCFTOOLS_ISEC.out.results.map { meta, dir ->
-        def vcfs = file("${dir}/000*.vcf.gz")
-        def tbis = file("${dir}/*.tbi")
-        tuple(meta, vcfs, tbis)
+        merge_input_ch = BCFTOOLS_ISEC.out.results.map { meta, dir ->
+            def vcfs = file("${dir}/000*.vcf.gz")
+            def tbis = file("${dir}/*.tbi")
+            tuple(meta, vcfs, tbis)
+        }
+    } else {
+        // Step 1 (alternative): Skip intersection and use original VCFs directly
+        merge_input_ch = vcfs_ch
     }
 
     empty_tuple_ch = Channel.value([[:], []])
 
-    // Merge intersected VCFs
-    BCFTOOLS_MERGE(merge_ch, empty_tuple_ch, empty_tuple_ch, empty_tuple_ch)
+    // Step 2: Merge VCFs (either intersected or original)
+    BCFTOOLS_MERGE(merge_input_ch, empty_tuple_ch, empty_tuple_ch, empty_tuple_ch)
     ch_versions = ch_versions.mix(BCFTOOLS_MERGE.out.versions)
 
-    merged_with_sv_paths = BCFTOOLS_MERGE.out.vcf
+    // Step 3: Join merged VCFs with their index files and format the output
+    merged_vcfs_ch = BCFTOOLS_MERGE.out.vcf
         .join(BCFTOOLS_MERGE.out.index)
         .map { meta, vcf, tbi ->
-            tuple(meta, meta.sv_p, meta.sv_m, meta.sv_f, vcf, tbi)
+            tuple(meta, vcf, tbi)
         }
     
     emit:
-    merged_vcf   = BCFTOOLS_MERGE.out.vcf      // channel: [meta, vcf]
-    merged_index = BCFTOOLS_MERGE.out.index    // channel: [meta, tbi]
-    sv_paths     = merged_with_sv_paths        // channel: [meta, sv_p, sv_m, sv_f, vcf, tbi]
-    versions     = ch_versions                 // channel: versions.yml
+    vcfs     = merged_vcfs_ch    // channel: [meta, vcf, tbi]
+    versions = ch_versions       // channel: versions.yml
 
 }
+
+ 
