@@ -22,7 +22,7 @@ process COLLAPSE_EVENTS {
     def verbose = task.ext.verbose ? "--verbose" : ""
     
     """
-    calculate_events.r \\
+    collapse_events.r \\
         --input ${upd_events_rds} \\
         --output_prefix ${prefix} \\
         ${verbose} \\
