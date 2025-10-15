@@ -2,7 +2,7 @@
 
 process VCF_CHECK {
     tag "$meta.id"
-    label 'process_medium'
+    label 'process_high'
     
     container "/home/u0030001/nf-updhmm_zenodo/updhmm-new_1.3.2.sif"
 
