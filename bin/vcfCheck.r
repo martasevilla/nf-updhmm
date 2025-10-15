@@ -4,7 +4,6 @@ suppressPackageStartupMessages({
   library(UPDhmm)
   library(VariantAnnotation)
   library(optparse)
-  library(BiocParallel)
 })
 
 option_list <- list(
@@ -52,21 +51,9 @@ tryCatch({
                            mother = sample_names[2], 
                            father = sample_names[3])
   
-  updEvents <- calculateEvents(processedVcf, BPPARAM = MulticoreParam(workers = 8))
-  
-  collapsed <- collapseEvents(updEvents)
-  
-  results_file <- paste0(opt$output_prefix, ".upd_results.txt")
-  collapsed_file <- paste0(opt$output_prefix, ".upd_collapsed.txt")
-
-  rds_file <- paste0(opt$output_prefix, ".upd_events.rds")
-  collapsed_rds_file <- paste0(opt$output_prefix, ".upd_collapsed.rds")  
-  
-  write.table(updEvents, file = results_file, sep = "\t", row.names = FALSE, quote = FALSE)
-  write.table(collapsed, file = collapsed_file, sep = "\t", row.names = FALSE, quote = FALSE)
-  
-  saveRDS(updEvents, file = rds_file)
-  saveRDS(collapsed, file = collapsed_rds_file)
+ 
+  processed_rds_file <- paste0(opt$output_prefix, ".processed.rds") 
+  saveRDS(processedVcf, file = processed_rds_file)
   
 }, error = function(e) {
   cat("ERROR:", conditionMessage(e), "\n")
