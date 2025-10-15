@@ -17,7 +17,7 @@ workflow {
     PREPROCESS_VCF(input_file)
 
     // Step 2: VCF Check (validate and prepare for UPD analysis)
-    VCF_CHECK(final_vcfs)
+    VCF_CHECK(PREPROCESS_VCF.out.vcfs)
     
     // Step 3: Calculate Events (compute UPD events)
     CALCULATE_EVENTS(VCF_CHECK.out.processed_vcf)
